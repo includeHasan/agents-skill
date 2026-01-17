@@ -1,12 +1,12 @@
-const fs = require('fs-extra');
-const path = require('path');
-const { getAgentsDir, getInstalledSkills } = require('./fs-helpers');
-const { registry } = require('../registry');
+import * as fs from 'fs-extra';
+import * as path from 'path';
+import { getAgentsDir, getInstalledSkills } from './fs-helpers';
+import { registry } from '../registry';
 
 /**
  * Generate the README.md content for .agents folder
  */
-function generateReadmeContent(installedFolders) {
+export function generateReadmeContent(installedFolders: string[]): string {
   const date = new Date().toISOString().split('T')[0];
   
   // Map folder names back to skill info
@@ -75,7 +75,7 @@ _Managed by [agent-skills](https://www.npmjs.com/package/agent-skills)_
 /**
  * Update the README.md in .agents folder
  */
-async function updateReadme(targetDir = '.') {
+export async function updateReadme(targetDir: string = '.'): Promise<string> {
   const agentsDir = getAgentsDir(targetDir);
   const readmePath = path.join(agentsDir, 'README.md');
   
@@ -90,8 +90,3 @@ async function updateReadme(targetDir = '.') {
   
   return readmePath;
 }
-
-module.exports = {
-  generateReadmeContent,
-  updateReadme
-};

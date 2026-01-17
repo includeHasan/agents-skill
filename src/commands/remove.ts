@@ -1,12 +1,16 @@
-const chalk = require('chalk');
-const { getSkill, skillExists } = require('../registry');
-const { removeSkillFolder, isSkillInstalled, getAgentsDir } = require('../utils/fs-helpers');
-const { updateReadme } = require('../utils/readme-generator');
+import chalk from 'chalk';
+import { getSkill, skillExists } from '../registry';
+import { removeSkillFolder, isSkillInstalled } from '../utils/fs-helpers';
+import { updateReadme } from '../utils/readme-generator';
+
+export interface RemoveOptions {
+  dir?: string;
+}
 
 /**
  * Remove one or more skills
  */
-async function removeSkills(skillIds, options) {
+export async function removeSkills(skillIds: string[], options: RemoveOptions): Promise<void> {
   const targetDir = options.dir || '.';
   
   console.log(chalk.blue('\n🗑️  Agent Skills Remover\n'));
@@ -16,10 +20,10 @@ async function removeSkills(skillIds, options) {
   
   for (const skillId of skillIds) {
     // Get folder name
-    let folderName;
+    let folderName: string;
     
     if (skillExists(skillId)) {
-      const skill = getSkill(skillId);
+      const skill = getSkill(skillId)!;
       folderName = skill.folderName;
     } else {
       // Try direct folder name
@@ -56,5 +60,3 @@ async function removeSkills(skillIds, options) {
   }
   console.log('');
 }
-
-module.exports = { removeSkills };

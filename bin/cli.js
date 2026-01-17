@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 const { program } = require('commander');
-const { installSkills } = require('../src/commands/install');
-const { listSkills } = require('../src/commands/list');
-const { removeSkills } = require('../src/commands/remove');
-const { initAgents } = require('../src/commands/init');
+const { installSkills } = require('../dist/commands/install');
+const { listSkills } = require('../dist/commands/list');
+const { removeSkills } = require('../dist/commands/remove');
+const { initAgents } = require('../dist/commands/init');
 const pkg = require('../package.json');
 
 program

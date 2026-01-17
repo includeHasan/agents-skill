@@ -1,12 +1,16 @@
-const chalk = require('chalk');
-const { ensureAgentsDir, getAgentsDir } = require('../utils/fs-helpers');
-const { updateReadme } = require('../utils/readme-generator');
-const fs = require('fs-extra');
+import chalk from 'chalk';
+import * as fs from 'fs-extra';
+import { ensureAgentsDir, getAgentsDir } from '../utils/fs-helpers';
+import { updateReadme } from '../utils/readme-generator';
+
+export interface InitOptions {
+  dir?: string;
+}
 
 /**
  * Initialize .agents folder
  */
-async function initAgents(options) {
+export async function initAgents(options: InitOptions): Promise<void> {
   const targetDir = options.dir || '.';
   const agentsDir = getAgentsDir(targetDir);
   
@@ -33,5 +37,3 @@ async function initAgents(options) {
   
   console.log('');
 }
-
-module.exports = { initAgents };

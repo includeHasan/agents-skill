@@ -1,19 +1,23 @@
-const chalk = require('chalk');
-const { getAllSkills } = require('../registry');
-const { getInstalledSkills, getAgentsDir } = require('../utils/fs-helpers');
-const fs = require('fs-extra');
+import chalk from 'chalk';
+import * as fs from 'fs-extra';
+import { getAllSkills } from '../registry';
+import { getInstalledSkills, getAgentsDir } from '../utils/fs-helpers';
+
+export interface ListOptions {
+  dir?: string;
+}
 
 /**
  * List available and installed skills
  */
-async function listSkills(options) {
+export async function listSkills(options: ListOptions): Promise<void> {
   const targetDir = options.dir || '.';
   const allSkills = getAllSkills();
   
   console.log(chalk.blue('\n📋 Agent Skills\n'));
   
   // Get installed skills
-  let installedFolders = [];
+  let installedFolders: string[] = [];
   const agentsDir = getAgentsDir(targetDir);
   
   if (await fs.pathExists(agentsDir)) {
@@ -29,12 +33,13 @@ async function listSkills(options) {
   for (const skill of allSkills) {
     const isInstalled = installedSet.has(skill.folderName);
     const status = isInstalled ? chalk.green('✓') : ' ';
-    const name = isInstalled ? chalk.green(skill.id) : chalk.white(skill.id);
-    const desc = chalk.gray(skill.description);
     
     // Pad skill ID for alignment
     const paddedId = skill.id.padEnd(15);
-    console.log(`  ${status} ${isInstalled ? chalk.green(paddedId) : paddedId} ${desc}`);
+    const displayId = isInstalled ? chalk.green(paddedId) : paddedId;
+    const desc = chalk.gray(skill.description);
+    
+    console.log(`  ${status} ${displayId} ${desc}`);
   }
   
   // Summary
@@ -48,5 +53,3 @@ async function listSkills(options) {
   }
   console.log('');
 }
-
-module.exports = { listSkills };

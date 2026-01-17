@@ -1,27 +1,31 @@
-const path = require('path');
-const chalk = require('chalk');
-const { getSkill, skillExists } = require('../registry');
-const { 
+import * as path from 'path';
+import chalk from 'chalk';
+import * as fs from 'fs-extra';
+import { getSkill, skillExists, SkillInfo } from '../registry';
+import { 
   ensureAgentsDir, 
   copySkillFolder, 
   getSkillsSourceDir,
   isSkillInstalled 
-} = require('../utils/fs-helpers');
-const { updateReadme } = require('../utils/readme-generator');
-const fs = require('fs-extra');
+} from '../utils/fs-helpers';
+import { updateReadme } from '../utils/readme-generator';
+
+export interface InstallOptions {
+  dir?: string;
+}
 
 /**
  * Install one or more skills
  */
-async function installSkills(skillIds, options) {
+export async function installSkills(skillIds: string[], options: InstallOptions): Promise<void> {
   const targetDir = options.dir || '.';
   const skillsSourceDir = getSkillsSourceDir();
   
   console.log(chalk.blue('\n📦 Agent Skills Installer\n'));
   
   // Validate all skills first
-  const validSkills = [];
-  const invalidSkills = [];
+  const validSkills: string[] = [];
+  const invalidSkills: string[] = [];
   
   for (const skillId of skillIds) {
     if (skillExists(skillId)) {
@@ -55,7 +59,7 @@ async function installSkills(skillIds, options) {
   let updated = 0;
   
   for (const skillId of validSkills) {
-    const skill = getSkill(skillId);
+    const skill = getSkill(skillId) as SkillInfo;
     const sourcePath = path.join(skillsSourceDir, skill.folderName);
     
     // Check if source exists
@@ -85,12 +89,10 @@ async function installSkills(skillIds, options) {
   // Summary
   console.log('');
   if (installed > 0 || updated > 0) {
-    const parts = [];
+    const parts: string[] = [];
     if (installed > 0) parts.push(`${installed} installed`);
     if (updated > 0) parts.push(`${updated} updated`);
     console.log(chalk.green(`✓ ${parts.join(', ')}`));
     console.log(chalk.gray(`\nSkills are in: ${agentsDir}`));
   }
 }
-
-module.exports = { installSkills };

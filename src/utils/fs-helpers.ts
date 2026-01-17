@@ -1,17 +1,17 @@
-const fs = require('fs-extra');
-const path = require('path');
+import * as fs from 'fs-extra';
+import * as path from 'path';
 
 /**
  * Get the .agents directory path
  */
-function getAgentsDir(targetDir = '.') {
+export function getAgentsDir(targetDir: string = '.'): string {
   return path.join(path.resolve(targetDir), '.agents');
 }
 
 /**
  * Ensure .agents directory exists
  */
-async function ensureAgentsDir(targetDir = '.') {
+export async function ensureAgentsDir(targetDir: string = '.'): Promise<string> {
   const agentsDir = getAgentsDir(targetDir);
   await fs.ensureDir(agentsDir);
   return agentsDir;
@@ -20,7 +20,7 @@ async function ensureAgentsDir(targetDir = '.') {
 /**
  * Check if a skill is installed
  */
-async function isSkillInstalled(skillFolderName, targetDir = '.') {
+export async function isSkillInstalled(skillFolderName: string, targetDir: string = '.'): Promise<boolean> {
   const skillPath = path.join(getAgentsDir(targetDir), skillFolderName);
   return fs.pathExists(skillPath);
 }
@@ -28,7 +28,7 @@ async function isSkillInstalled(skillFolderName, targetDir = '.') {
 /**
  * Get list of installed skill folders
  */
-async function getInstalledSkills(targetDir = '.') {
+export async function getInstalledSkills(targetDir: string = '.'): Promise<string[]> {
   const agentsDir = getAgentsDir(targetDir);
   
   if (!await fs.pathExists(agentsDir)) {
@@ -44,7 +44,11 @@ async function getInstalledSkills(targetDir = '.') {
 /**
  * Copy skill folder to .agents
  */
-async function copySkillFolder(sourcePath, skillFolderName, targetDir = '.') {
+export async function copySkillFolder(
+  sourcePath: string, 
+  skillFolderName: string, 
+  targetDir: string = '.'
+): Promise<string> {
   const agentsDir = await ensureAgentsDir(targetDir);
   const destPath = path.join(agentsDir, skillFolderName);
   
@@ -55,7 +59,10 @@ async function copySkillFolder(sourcePath, skillFolderName, targetDir = '.') {
 /**
  * Remove skill folder from .agents
  */
-async function removeSkillFolder(skillFolderName, targetDir = '.') {
+export async function removeSkillFolder(
+  skillFolderName: string, 
+  targetDir: string = '.'
+): Promise<boolean> {
   const skillPath = path.join(getAgentsDir(targetDir), skillFolderName);
   
   if (await fs.pathExists(skillPath)) {
@@ -68,16 +75,6 @@ async function removeSkillFolder(skillFolderName, targetDir = '.') {
 /**
  * Get the skills source directory (bundled with package)
  */
-function getSkillsSourceDir() {
+export function getSkillsSourceDir(): string {
   return path.join(__dirname, '..', '..', 'skills');
 }
-
-module.exports = {
-  getAgentsDir,
-  ensureAgentsDir,
-  isSkillInstalled,
-  getInstalledSkills,
-  copySkillFolder,
-  removeSkillFolder,
-  getSkillsSourceDir
-};
