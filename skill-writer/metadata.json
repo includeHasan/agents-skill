@@ -1,0 +1,17 @@
+{
+  "version": "1.0.0",
+  "author": "Agent Skills Community",
+  "date": "January 2026",
+  "abstract": "Universal guide for AI agents to create high-quality, well-structured Skills for any technology, language, or domain. Based on Claude's official skill-writing principles: conciseness, appropriate degrees of freedom, and progressive disclosure. Covers the complete 6-step creation process from understanding use cases to packaging and iteration.",
+  "references": [
+    "https://claude.ai/docs/skills",
+    "https://github.com/vercel-labs/agent-skills",
+    "https://docs.anthropic.com"
+  ],
+  "compatibility": [
+    "Claude Code",
+    "OpenCode",
+    "Cursor",
+    "Other MCP-compatible agents"
+  ]
+}
