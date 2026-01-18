@@ -99,7 +99,7 @@ program
     .command('init')
     .description('Initialize skills with smart project detection')
     .option('-y, --yes', 'Skip confirmation prompts')
-    .option('-s, --source <source>', 'Custom skill source (default: includeHasan/agents-skill)')
+    .option('-s, --source <source>', 'Custom skill source (default: includeHasan/unifai)')
     .option('-a, --agent <agents...>', 'Specify agents to install to')
     .option('-g, --global', 'Install globally')
     .action(async (options) => {
