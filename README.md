@@ -1,15 +1,14 @@
 # unifai
 
-> Universal AI IDE Configuration & Skill Manager
+> Universal AI IDE Configuration & Sync Tool
 
-A powerful CLI tool to unify your AI coding agent experience. Standardize instructions, manage MCP servers, and install agent skills across Claude Code, Antigravity, Cursor, OpenCode, and GitHub Copilot.
+A powerful CLI tool to unify your AI coding agent experience. Standardize instructions, manage MCP servers, and synchronize rules across Claude Code, Antigravity, Cursor, OpenCode, and GitHub Copilot.
 
 ## 🚀 Key Features
 
 - 🔄 **Universal Sync & Migration** - Synchronize and migrate agent instructions, rules, and MCP configs across all IDEs at once.
 - 🛠️ **MCP Management** - Add, list, and sync Model Context Protocol servers (Standard Stdio & HTTP/SSE).
 - 🤖 **Standardized Agents** - Project-level `AGENTS.md` and `CLAUDE.md` with professional prompt templates.
-- ✨ **Skill Manager** - Install specialized agent instructions from any Git repository.
 - 📐 **Cross-IDE Scavenging** - Automatically discover rules from `.claude/`, `.cursor/`, or `.agent/` and unify them.
 - 🌐 **Global & Workspace Rules** - Manage rules centrally (e.g., `~/.gemini/GEMINI.md`) or per project.
 
@@ -50,13 +49,6 @@ Initialize a standardized instruction set for your project with built-in best pr
 unifai agent init
 ```
 
-### 4. Install Agent Skills
-Install specialized behaviors (like "frontend-expert" or "testing-pro") from any Git repo:
-```bash
-# Install skills from a GitHub repository
-unifai includeHasan/agent-skills
-```
-
 ## 🔄 Universal Migration Paths
 
 The `sync` command "scavenges" configurations from these locations and migrates them to your active IDEs:
@@ -86,14 +78,12 @@ The `sync` command "scavenges" configurations from these locations and migrates 
 | `mcp sync` | Sync MCP servers to all assistant configs |
 | `agent init` | Initialize standardized agent instruction files |
 | `agent show` | Show current agent configuration |
-| `<git-url>` | Install skills from a remote repository |
 
 ## 🏗️ Folder Structure
 
 Universal AI IDEs follow these conventions through `unifai`:
 
 - **Workspace Rules**: `.agent/rules/` (Unified Markdown files)
-- **Agent Skills**: `.agent/skills/`
 - **Global Config**: `~/.gemini/` (Settings, global rules, and instructions)
 
 ## 📄 License

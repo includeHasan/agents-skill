@@ -12,6 +12,7 @@ export interface DetectedProject {
   name?: string;
   version?: string;
   framework?: string;
+  techStack: string[];
   recommendedSkills: string[];
   optionalSkills: string[];
   configFile: string;
@@ -68,7 +69,7 @@ function checkFlutter(dir: string): DetectedProject | null {
   try {
     const content = readFileSync(pubspecPath, 'utf-8');
     const isFlutter = content.includes('flutter:') || content.includes('flutter_');
-    
+
     // Parse name and version (simple regex parsing)
     const nameMatch = content.match(/^name:\s*(.+)$/m);
     const versionMatch = content.match(/^version:\s*(.+)$/m);
@@ -78,7 +79,8 @@ function checkFlutter(dir: string): DetectedProject | null {
       displayName: isFlutter ? 'Flutter' : 'Dart',
       name: nameMatch?.[1]?.trim(),
       version: versionMatch?.[1]?.trim(),
-      recommendedSkills: isFlutter 
+      techStack: isFlutter ? ['Flutter', 'Dart'] : ['Dart'],
+      recommendedSkills: isFlutter
         ? ['flutter', 'clean-code', 'testing']
         : ['dart', 'clean-code', 'testing'],
       optionalSkills: ['git', 'api-design'],
@@ -97,22 +99,23 @@ function checkReact(dir: string): DetectedProject | null {
   if (!pkg) return null;
 
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
+
   if (!deps['react']) return null;
-  
+
   // Check for Next.js (handled separately)
   if (deps['next']) return null;
 
   const hasTypescript = !!deps['typescript'];
   const hasVite = !!deps['vite'];
-  
+
   return {
     type: 'react',
     displayName: hasVite ? 'React (Vite)' : 'React',
     name: pkg.name,
     version: pkg.version,
     framework: hasVite ? 'vite' : 'cra',
-    recommendedSkills: hasTypescript 
+    techStack: hasTypescript ? ['React', 'TypeScript', 'Vite'] : ['React', 'JavaScript'],
+    recommendedSkills: hasTypescript
       ? ['react', 'typescript', 'clean-code']
       : ['react', 'clean-code'],
     optionalSkills: ['testing', 'git', 'api-design'],
@@ -128,18 +131,19 @@ function checkNextJs(dir: string): DetectedProject | null {
   if (!pkg) return null;
 
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
+
   if (!deps['next']) return null;
 
   const hasTypescript = !!deps['typescript'];
-  
+
   return {
     type: 'nextjs',
     displayName: 'Next.js',
     name: pkg.name,
     version: pkg.version,
     framework: 'nextjs',
-    recommendedSkills: hasTypescript 
+    techStack: hasTypescript ? ['Next.js', 'React', 'TypeScript'] : ['Next.js', 'React', 'JavaScript'],
+    recommendedSkills: hasTypescript
       ? ['react', 'typescript', 'clean-code', 'api-design']
       : ['react', 'clean-code', 'api-design'],
     optionalSkills: ['testing', 'git'],
@@ -155,19 +159,20 @@ function checkVue(dir: string): DetectedProject | null {
   if (!pkg) return null;
 
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
+
   if (!deps['vue']) return null;
 
   const hasTypescript = !!deps['typescript'];
   const hasNuxt = !!deps['nuxt'];
-  
+
   return {
     type: hasNuxt ? 'nuxt' : 'vue',
     displayName: hasNuxt ? 'Nuxt.js' : 'Vue.js',
     name: pkg.name,
     version: pkg.version,
     framework: hasNuxt ? 'nuxt' : 'vue',
-    recommendedSkills: hasTypescript 
+    techStack: hasTypescript ? [hasNuxt ? 'Nuxt.js' : 'Vue.js', 'TypeScript'] : [hasNuxt ? 'Nuxt.js' : 'Vue.js', 'JavaScript'],
+    recommendedSkills: hasTypescript
       ? ['vue', 'typescript', 'clean-code']
       : ['vue', 'clean-code'],
     optionalSkills: ['testing', 'git', 'api-design'],
@@ -183,15 +188,16 @@ function checkAngular(dir: string): DetectedProject | null {
   if (!pkg) return null;
 
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
+
   if (!deps['@angular/core']) return null;
-  
+
   return {
     type: 'angular',
     displayName: 'Angular',
     name: pkg.name,
     version: pkg.version,
     framework: 'angular',
+    techStack: ['Angular', 'TypeScript'],
     recommendedSkills: ['angular', 'typescript', 'clean-code'],
     optionalSkills: ['testing', 'git', 'api-design'],
     configFile: 'package.json',
@@ -206,24 +212,25 @@ function checkNode(dir: string): DetectedProject | null {
   if (!pkg) return null;
 
   const deps = { ...pkg.dependencies, ...pkg.devDependencies };
-  
+
   // Check for backend frameworks
   const hasExpress = !!deps['express'];
   const hasFastify = !!deps['fastify'];
   const hasNestJS = !!deps['@nestjs/core'];
   const hasHono = !!deps['hono'];
   const hasTypescript = !!deps['typescript'];
-  
+
   if (!hasExpress && !hasFastify && !hasNestJS && !hasHono) {
     // Check if it's a generic Node project
     if (!existsSync(join(dir, 'package.json'))) return null;
-    
+
     return {
       type: 'node',
       displayName: 'Node.js',
       name: pkg.name,
       version: pkg.version,
-      recommendedSkills: hasTypescript 
+      techStack: hasTypescript ? ['Node.js', 'TypeScript'] : ['Node.js', 'JavaScript'],
+      recommendedSkills: hasTypescript
         ? ['node', 'typescript', 'clean-code']
         : ['node', 'clean-code'],
       optionalSkills: ['testing', 'git', 'api-design'],
@@ -233,7 +240,7 @@ function checkNode(dir: string): DetectedProject | null {
 
   let framework = 'express';
   let displayName = 'Express.js';
-  
+
   if (hasNestJS) {
     framework = 'nestjs';
     displayName = 'NestJS';
@@ -244,14 +251,15 @@ function checkNode(dir: string): DetectedProject | null {
     framework = 'hono';
     displayName = 'Hono';
   }
-  
+
   return {
     type: 'node',
     displayName,
     name: pkg.name,
     version: pkg.version,
     framework,
-    recommendedSkills: hasTypescript 
+    techStack: hasTypescript ? [displayName, 'Node.js', 'TypeScript'] : [displayName, 'Node.js', 'JavaScript'],
+    recommendedSkills: hasTypescript
       ? ['node', 'typescript', 'api-design', 'clean-code']
       : ['node', 'api-design', 'clean-code'],
     optionalSkills: ['testing', 'git'],
@@ -266,10 +274,10 @@ function checkSpringBoot(dir: string): DetectedProject | null {
   const pomPath = join(dir, 'pom.xml');
   const gradlePath = join(dir, 'build.gradle');
   const gradleKtsPath = join(dir, 'build.gradle.kts');
-  
+
   const hasPom = existsSync(pomPath);
   const hasGradle = existsSync(gradlePath) || existsSync(gradleKtsPath);
-  
+
   if (!hasPom && !hasGradle) return null;
 
   let isSpringBoot = false;
@@ -280,23 +288,24 @@ function checkSpringBoot(dir: string): DetectedProject | null {
       const content = readFileSync(pomPath, 'utf-8');
       isSpringBoot = content.includes('spring-boot');
       configFile = 'pom.xml';
-    } catch {}
+    } catch { }
   }
-  
+
   if (!isSpringBoot && hasGradle) {
     try {
       const gradleFile = existsSync(gradleKtsPath) ? gradleKtsPath : gradlePath;
       const content = readFileSync(gradleFile, 'utf-8');
       isSpringBoot = content.includes('spring-boot') || content.includes('org.springframework.boot');
       configFile = existsSync(gradleKtsPath) ? 'build.gradle.kts' : 'build.gradle';
-    } catch {}
+    } catch { }
   }
-  
+
   if (isSpringBoot) {
     return {
       type: 'springboot',
       displayName: 'Spring Boot',
       framework: 'springboot',
+      techStack: ['Spring Boot', 'Java'],
       recommendedSkills: ['springboot', 'clean-code', 'api-design'],
       optionalSkills: ['testing', 'git'],
       configFile,
@@ -307,6 +316,7 @@ function checkSpringBoot(dir: string): DetectedProject | null {
   return {
     type: 'java',
     displayName: 'Java',
+    techStack: ['Java'],
     recommendedSkills: ['clean-code'],
     optionalSkills: ['testing', 'git'],
     configFile,
@@ -320,19 +330,19 @@ function checkPython(dir: string): DetectedProject | null {
   const requirementsPath = join(dir, 'requirements.txt');
   const pyprojectPath = join(dir, 'pyproject.toml');
   const setupPyPath = join(dir, 'setup.py');
-  
+
   const hasRequirements = existsSync(requirementsPath);
   const hasPyproject = existsSync(pyprojectPath);
   const hasSetupPy = existsSync(setupPyPath);
-  
+
   if (!hasRequirements && !hasPyproject && !hasSetupPy) return null;
 
   let framework: string | undefined;
   let displayName = 'Python';
-  
+
   // Check for frameworks in requirements or pyproject
   const filesToCheck = [requirementsPath, pyprojectPath].filter(existsSync);
-  
+
   for (const file of filesToCheck) {
     try {
       const content = readFileSync(file, 'utf-8').toLowerCase();
@@ -349,13 +359,14 @@ function checkPython(dir: string): DetectedProject | null {
         displayName = 'Flask';
         break;
       }
-    } catch {}
+    } catch { }
   }
-  
+
   return {
     type: 'python',
     displayName,
     framework,
+    techStack: framework ? [displayName, 'Python'] : ['Python'],
     recommendedSkills: ['python', 'clean-code'],
     optionalSkills: framework ? ['api-design', 'testing', 'git'] : ['testing', 'git'],
     configFile: hasPyproject ? 'pyproject.toml' : hasRequirements ? 'requirements.txt' : 'setup.py',
@@ -372,11 +383,12 @@ function checkGo(dir: string): DetectedProject | null {
   try {
     const content = readFileSync(goModPath, 'utf-8');
     const moduleMatch = content.match(/^module\s+(.+)$/m);
-    
+
     return {
       type: 'go',
       displayName: 'Go',
       name: moduleMatch?.[1]?.trim(),
+      techStack: ['Go'],
       recommendedSkills: ['clean-code'],
       optionalSkills: ['api-design', 'testing', 'git'],
       configFile: 'go.mod',
@@ -397,12 +409,13 @@ function checkRust(dir: string): DetectedProject | null {
     const content = readFileSync(cargoPath, 'utf-8');
     const nameMatch = content.match(/^name\s*=\s*"(.+)"/m);
     const versionMatch = content.match(/^version\s*=\s*"(.+)"/m);
-    
+
     return {
       type: 'rust',
       displayName: 'Rust',
       name: nameMatch?.[1],
       version: versionMatch?.[1],
+      techStack: ['Rust'],
       recommendedSkills: ['clean-code'],
       optionalSkills: ['testing', 'git'],
       configFile: 'Cargo.toml',
@@ -418,10 +431,11 @@ function checkRust(dir: string): DetectedProject | null {
 function checkGeneric(dir: string): DetectedProject | null {
   const gitPath = join(dir, '.git');
   if (!existsSync(gitPath)) return null;
-  
+
   return {
     type: 'generic',
     displayName: 'Project',
+    techStack: ['Generic'],
     recommendedSkills: ['clean-code', 'git'],
     optionalSkills: ['testing'],
     configFile: '.git',

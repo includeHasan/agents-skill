@@ -1,7 +1,7 @@
 {
   "name": "unifai",
-  "version": "2.0.3",
-  "description": "Install AI agent skills from Git repositories. Supports 15+ agents including Antigravity, Cursor, Claude Code, OpenCode, GitHub Copilot, and more.",
+  "version": "2.0.4",
+  "description": "Universal AI IDE Configuration & Sync tool. Standardize instructions, manage MCP servers, and unify rules across Claude Code, Cursor, Antigravity, and more.",
   "type": "module",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -44,8 +44,8 @@
     "assistant",
     "llm",
     "coding-assistant",
-    "best-practices",
-    "git",
+    "automation",
+    "workflow",
     "cli",
     "bun"
   ],
