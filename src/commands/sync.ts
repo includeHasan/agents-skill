@@ -56,7 +56,15 @@ export async function syncCommand(options: SyncCommandOptions): Promise<void> {
     }
 
     // Try to find MCP config
-    let mcpServers: Array<{ name: string; command: string; args?: string[]; env?: Record<string, string> }> = [];
+    let mcpServers: Array<{
+        name: string;
+        type: 'command' | 'http';
+        command?: string;
+        args?: string[];
+        env?: Record<string, string>;
+        url?: string;
+        headers?: Record<string, string>;
+    }> = [];
     const mcpSources = ['.mcp/mcp.json', '.claude/mcp.json', '.cursor/mcp.json'];
 
     for (const source of mcpSources) {
@@ -65,10 +73,25 @@ export async function syncCommand(options: SyncCommandOptions): Promise<void> {
             try {
                 const content = await readFile(path, 'utf-8');
                 const config = JSON.parse(content);
-                mcpServers = Object.entries(config.mcpServers || {}).map(([name, sc]) => ({
-                    name,
-                    ...sc as { command: string; args?: string[]; env?: Record<string, string> },
-                }));
+                mcpServers = Object.entries(config.mcpServers || {}).map(([name, sc]) => {
+                    const serverConfig = sc as {
+                        type?: 'command' | 'http';
+                        command?: string;
+                        args?: string[];
+                        env?: Record<string, string>;
+                        url?: string;
+                        headers?: Record<string, string>;
+                    };
+                    return {
+                        name,
+                        type: serverConfig.type || 'command',
+                        command: serverConfig.command,
+                        args: serverConfig.args,
+                        env: serverConfig.env,
+                        url: serverConfig.url,
+                        headers: serverConfig.headers,
+                    };
+                });
                 break;
             } catch {
                 // Continue to next source

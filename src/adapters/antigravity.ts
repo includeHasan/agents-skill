@@ -1,10 +1,9 @@
 /**
- * OpenCode Adapter
+ * Antigravity Adapter
  * 
- * Generates configuration for OpenCode AI coding assistant
- * - AGENTS.md for agent instructions
- * - .opencode.json for configuration
- * - .opencode/mcp.json for MCP servers
+ * Generates configuration for Antigravity (Google DeepMind's AI coding assistant)
+ * - Uses brain artifacts directory for agent configs
+ * - MCP server configuration in .gemini/settings.json
  */
 
 import { BaseAdapter } from './base.js';
@@ -14,39 +13,43 @@ import { homedir } from 'os';
 import { join } from 'path';
 import { existsSync } from 'fs';
 
-export class OpenCodeAdapter extends BaseAdapter {
-    readonly id: AgentType = 'opencode';
-    readonly name = 'opencode';
-    readonly displayName = 'OpenCode';
+export class AntigravityAdapter extends BaseAdapter {
+    readonly id: AgentType = 'antigravity';
+    readonly name = 'antigravity';
+    readonly displayName = 'Antigravity';
 
     readonly config: IDEConfig = {
-        id: 'opencode',
-        name: 'opencode',
-        displayName: 'OpenCode',
+        id: 'antigravity',
+        name: 'antigravity',
+        displayName: 'Antigravity',
+        // Agent/rules file - GEMINI.md for global, AGENTS.md for workspace
         agentFile: 'AGENTS.md',
-        agentFileGlobal: join(homedir(), '.config', 'opencode', 'AGENTS.md'),
-        rulesPath: '.opencode.json',
-        rulesFormat: 'json',
-        skillsDir: '.opencode/skill',
-        globalSkillsDir: join(homedir(), '.config', 'opencode', 'skill'),
-        mcpConfig: '.opencode/mcp.json',
-        mcpConfigGlobal: join(homedir(), '.config', 'opencode', 'mcp.json'),
+        agentFileGlobal: join(homedir(), '.gemini', 'GEMINI.md'),
+        // Rules path - .agent/rules for workspace
+        rulesPath: '.agent/rules',
+        rulesFormat: 'markdown',
+        // Skills directory
+        skillsDir: '.agent/skills',
+        globalSkillsDir: join(homedir(), '.gemini', 'skills'),
+        // MCP config
+        mcpConfig: '.gemini/settings.json',
+        mcpConfigGlobal: join(homedir(), '.gemini', 'settings.json'),
         mcpFormat: 'json',
     };
 
     async isInstalled(): Promise<boolean> {
-        return existsSync(join(homedir(), '.config', 'opencode'));
+        return existsSync(join(homedir(), '.gemini'));
     }
 
     async generateAgentFile(config: AgentConfig): Promise<string> {
         // Import prompts dynamically to avoid circular dependencies
-        const { DEFAULT_AGENT_INTRO, getPromptForTechStack } = await import('../data/prompts.js');
+        const { DEFAULT_AGENT_INTRO, getPromptForTechStack, MCP_INTRO } = await import('../data/prompts.js');
 
         const sections: string[] = [];
 
-        // Header with AGENTS.md standard format
-        sections.push(`# AGENTS.md - ${config.projectName || 'Project'}\n`);
-        sections.push('> Universal AI Agent Instructions\n');
+        // Header with Antigravity-specific format
+        sections.push(`# ${config.projectName || 'Project'} - Antigravity Instructions\n`);
+        sections.push('> AI-powered development with Antigravity\n');
 
         // Description
         if (config.description) {
@@ -124,42 +127,58 @@ export class OpenCodeAdapter extends BaseAdapter {
             sections.push('');
         }
 
+        // MCP Servers
+        if (config.mcpServers && config.mcpServers.length > 0) {
+            sections.push(MCP_INTRO);
+            config.mcpServers.forEach(server => {
+                sections.push(`- **${server.displayName || server.name}**${server.description ? `: ${server.description}` : ''}`);
+            });
+            sections.push('');
+        }
+
         return sections.join('\n');
     }
 
-    async generateRulesConfig(rules: RuleSet): Promise<string> {
-        // OpenCode uses .opencode.json for configuration
-        const config: Record<string, unknown> = {
-            rules: {
-                enabled: true,
-                global: rules.global.map(r => r.content),
-            },
-        };
+    async generateRulesConfig(rules: RuleSet): Promise<Record<string, string>> {
+        // Antigravity uses markdown files in .gemini/rules/ directory
+        const files: Record<string, string> = {};
 
-        if (rules.pathSpecific.length > 0) {
-            (config.rules as Record<string, unknown>).patterns = rules.pathSpecific.reduce((acc, pr) => {
-                acc[pr.pattern] = pr.rules.map(r => r.content);
-                return acc;
-            }, {} as Record<string, string[]>);
+        // Generate global rules file
+        if (rules.global.length > 0) {
+            const lines: string[] = [];
+            lines.push('# Global Rules\n');
+            rules.global.forEach(r => lines.push(`- ${r.content}`));
+            files['global.md'] = lines.join('\n');
         }
 
-        return JSON.stringify(config, null, 2);
+        // Generate path-specific rules files
+        for (const pathRule of rules.pathSpecific) {
+            const safeName = pathRule.pattern.replace(/[^a-zA-Z0-9]/g, '-').replace(/-+/g, '-');
+            const lines: string[] = [];
+            lines.push(`# Rules for ${pathRule.pattern}\n`);
+            lines.push(`> Applies to: \`${pathRule.pattern}\`\n`);
+            pathRule.rules.forEach(r => lines.push(`- ${r.content}`));
+            files[`${safeName}.md`] = lines.join('\n');
+        }
+
+        return files;
     }
 
     async generateMCPConfig(servers: MCPServer[]): Promise<string> {
-        const mcpConfig: Record<string, unknown> = {
+        // Antigravity uses settings.json with mcpServers key
+        const settings: Record<string, unknown> = {
             mcpServers: {},
         };
 
         for (const server of servers) {
             if (server.type === 'http') {
-                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
-                    type: 'http',
+                (settings.mcpServers as Record<string, unknown>)[server.name] = {
+                    type: 'sse',
                     url: server.url,
                     ...(server.headers && Object.keys(server.headers).length > 0 ? { headers: server.headers } : {}),
                 };
             } else {
-                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
+                (settings.mcpServers as Record<string, unknown>)[server.name] = {
                     command: server.command,
                     args: server.args || [],
                     ...(server.env && Object.keys(server.env).length > 0 ? { env: server.env } : {}),
@@ -167,7 +186,7 @@ export class OpenCodeAdapter extends BaseAdapter {
             }
         }
 
-        return JSON.stringify(mcpConfig, null, 2);
+        return JSON.stringify(settings, null, 2);
     }
 
     getAgentFilePath(projectPath: string, global?: boolean): string {
@@ -179,8 +198,10 @@ export class OpenCodeAdapter extends BaseAdapter {
 
     getRulesPath(projectPath: string, global?: boolean): string {
         if (global) {
-            return join(homedir(), '.config', 'opencode', 'opencode.json');
+            // Global rules are in GEMINI.md
+            return join(homedir(), '.gemini', 'GEMINI.md');
         }
+        // Workspace rules are in .agent/rules/
         return join(projectPath, this.config.rulesPath);
     }
 

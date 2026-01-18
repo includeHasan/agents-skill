@@ -39,6 +39,9 @@ export class ClaudeCodeAdapter extends BaseAdapter {
     }
 
     async generateAgentFile(config: AgentConfig): Promise<string> {
+        // Import prompts dynamically to avoid circular dependencies
+        const { DEFAULT_AGENT_INTRO, getPromptForTechStack, MCP_INTRO } = await import('../data/prompts.js');
+
         const sections: string[] = [];
 
         // Header
@@ -48,6 +51,9 @@ export class ClaudeCodeAdapter extends BaseAdapter {
         if (config.description) {
             sections.push(`${config.description}\n`);
         }
+
+        // Default behavior intro (the copy-paste template)
+        sections.push(DEFAULT_AGENT_INTRO);
 
         // Tech Stack
         if (config.techStack.length > 0 || config.frameworks.length > 0) {
@@ -62,6 +68,13 @@ export class ClaudeCodeAdapter extends BaseAdapter {
                 sections.push(`**Technologies:** ${config.techStack.join(', ')}`);
             }
             sections.push('');
+        }
+
+        // Tech-specific guidelines
+        const allTech = [...config.languages, ...config.frameworks, ...config.techStack];
+        const techPrompts = getPromptForTechStack(allTech);
+        if (techPrompts) {
+            sections.push(techPrompts);
         }
 
         // Build & Run Commands
@@ -106,7 +119,7 @@ export class ClaudeCodeAdapter extends BaseAdapter {
 
         // MCP Servers
         if (config.mcpServers && config.mcpServers.length > 0) {
-            sections.push('## Available MCP Tools\n');
+            sections.push(MCP_INTRO);
             config.mcpServers.forEach(server => {
                 sections.push(`- **${server.displayName || server.name}**${server.description ? `: ${server.description}` : ''}`);
             });
@@ -144,11 +157,21 @@ export class ClaudeCodeAdapter extends BaseAdapter {
         };
 
         for (const server of servers) {
-            (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
-                command: server.command,
-                args: server.args || [],
-                ...(server.env && Object.keys(server.env).length > 0 ? { env: server.env } : {}),
-            };
+            if (server.type === 'http') {
+                // HTTP/SSE server
+                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
+                    type: 'sse',
+                    url: server.url,
+                    ...(server.headers && Object.keys(server.headers).length > 0 ? { headers: server.headers } : {}),
+                };
+            } else {
+                // Command (stdio) server - default
+                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
+                    command: server.command,
+                    args: server.args || [],
+                    ...(server.env && Object.keys(server.env).length > 0 ? { env: server.env } : {}),
+                };
+            }
         }
 
         return JSON.stringify(mcpConfig, null, 2);

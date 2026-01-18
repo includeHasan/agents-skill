@@ -39,6 +39,9 @@ export class CursorAdapter extends BaseAdapter {
     }
 
     async generateAgentFile(config: AgentConfig): Promise<string> {
+        // Import prompts dynamically to avoid circular dependencies
+        const { DEFAULT_AGENT_INTRO, getPromptForTechStack } = await import('../data/prompts.js');
+
         const sections: string[] = [];
 
         // Header
@@ -49,12 +52,22 @@ export class CursorAdapter extends BaseAdapter {
             sections.push(`${config.description}\n`);
         }
 
+        // Default behavior intro (the copy-paste template)
+        sections.push(DEFAULT_AGENT_INTRO);
+
         // Tech Stack
         if (config.languages.length > 0 || config.frameworks.length > 0 || config.techStack.length > 0) {
             sections.push('## Tech Stack\n');
             const stack = [...config.languages, ...config.frameworks, ...config.techStack];
             sections.push(stack.join(', '));
             sections.push('');
+        }
+
+        // Tech-specific guidelines
+        const allTech = [...config.languages, ...config.frameworks, ...config.techStack];
+        const techPrompts = getPromptForTechStack(allTech);
+        if (techPrompts) {
+            sections.push(techPrompts);
         }
 
         // Commands
@@ -139,11 +152,19 @@ export class CursorAdapter extends BaseAdapter {
         };
 
         for (const server of servers) {
-            (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
-                command: server.command,
-                args: server.args || [],
-                ...(server.env && Object.keys(server.env).length > 0 ? { env: server.env } : {}),
-            };
+            if (server.type === 'http') {
+                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
+                    type: 'sse',
+                    url: server.url,
+                    ...(server.headers && Object.keys(server.headers).length > 0 ? { headers: server.headers } : {}),
+                };
+            } else {
+                (mcpConfig.mcpServers as Record<string, unknown>)[server.name] = {
+                    command: server.command,
+                    args: server.args || [],
+                    ...(server.env && Object.keys(server.env).length > 0 ? { env: server.env } : {}),
+                };
+            }
         }
 
         return JSON.stringify(mcpConfig, null, 2);

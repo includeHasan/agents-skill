@@ -78,7 +78,29 @@ export async function mcpAdd(options: MCPCommandOptions): Promise<void> {
     console.log();
     p.intro(chalk.bgMagenta.black(' mcp add '));
 
-    // Get server details
+    // Choose server type first
+    const serverType = await p.select({
+        message: 'Choose the type of MCP server to add',
+        options: [
+            {
+                value: 'command',
+                label: 'Command (stdio)',
+                hint: 'Run a local command that implements the MCP protocol'
+            },
+            {
+                value: 'http',
+                label: 'HTTP (HTTP or Server-Sent Events)',
+                hint: 'Connect to a remote HTTP server that implements the MCP protocol'
+            },
+        ],
+    }) as 'command' | 'http';
+
+    if (p.isCancel(serverType)) {
+        p.cancel('Cancelled');
+        return;
+    }
+
+    // Get common server details
     const name = await p.text({
         message: 'Server name (unique identifier)',
         placeholder: 'my-mcp-server',
@@ -100,49 +122,6 @@ export async function mcpAdd(options: MCPCommandOptions): Promise<void> {
         return;
     }
 
-    const command = await p.text({
-        message: 'Command to run',
-        placeholder: 'npx -y @anthropic/mcp-server-filesystem',
-        validate: (v) => v.length === 0 ? 'Command is required' : undefined,
-    }) as string;
-
-    if (p.isCancel(command)) {
-        p.cancel('Cancelled');
-        return;
-    }
-
-    const argsInput = await p.text({
-        message: 'Arguments (space-separated)',
-        placeholder: '. --allow-read',
-    }) as string;
-
-    if (p.isCancel(argsInput)) {
-        p.cancel('Cancelled');
-        return;
-    }
-
-    const args = argsInput ? argsInput.split(' ').filter(Boolean) : [];
-
-    const envInput = await p.text({
-        message: 'Environment variables (KEY=value, comma-separated)',
-        placeholder: 'API_KEY=${API_KEY}, DEBUG=true',
-    }) as string;
-
-    if (p.isCancel(envInput)) {
-        p.cancel('Cancelled');
-        return;
-    }
-
-    const env: Record<string, string> = {};
-    if (envInput) {
-        envInput.split(',').forEach(pair => {
-            const [key, value] = pair.split('=').map(s => s.trim());
-            if (key && value) {
-                env[key] = value;
-            }
-        });
-    }
-
     const description = await p.text({
         message: 'Description (optional)',
         placeholder: 'What does this server do?',
@@ -153,15 +132,108 @@ export async function mcpAdd(options: MCPCommandOptions): Promise<void> {
         return;
     }
 
-    // Create server config
-    const server: MCPServer = {
-        name,
-        displayName: displayName || undefined,
-        command,
-        args: args.length > 0 ? args : undefined,
-        env: Object.keys(env).length > 0 ? env : undefined,
-        description: description || undefined,
-    };
+    let server: MCPServer;
+
+    if (serverType === 'command') {
+        // Command (stdio) type
+        const command = await p.text({
+            message: 'Command to run',
+            placeholder: 'npx -y @anthropic/mcp-server-filesystem',
+            validate: (v) => v.length === 0 ? 'Command is required' : undefined,
+        }) as string;
+
+        if (p.isCancel(command)) {
+            p.cancel('Cancelled');
+            return;
+        }
+
+        const argsInput = await p.text({
+            message: 'Arguments (space-separated)',
+            placeholder: '. --allow-read',
+        }) as string;
+
+        if (p.isCancel(argsInput)) {
+            p.cancel('Cancelled');
+            return;
+        }
+
+        const args = argsInput ? argsInput.split(' ').filter(Boolean) : [];
+
+        const envInput = await p.text({
+            message: 'Environment variables (KEY=value, comma-separated)',
+            placeholder: 'API_KEY=${API_KEY}, DEBUG=true',
+        }) as string;
+
+        if (p.isCancel(envInput)) {
+            p.cancel('Cancelled');
+            return;
+        }
+
+        const env: Record<string, string> = {};
+        if (envInput) {
+            envInput.split(',').forEach(pair => {
+                const [key, value] = pair.split('=').map(s => s.trim());
+                if (key && value) {
+                    env[key] = value;
+                }
+            });
+        }
+
+        server = {
+            name,
+            displayName: displayName || undefined,
+            description: description || undefined,
+            type: 'command',
+            command,
+            args: args.length > 0 ? args : undefined,
+            env: Object.keys(env).length > 0 ? env : undefined,
+        };
+    } else {
+        // HTTP type
+        const url = await p.text({
+            message: 'Server URL',
+            placeholder: 'http://localhost:3000/mcp',
+            validate: (v) => v.length === 0 ? 'URL is required' : undefined,
+        }) as string;
+
+        if (p.isCancel(url)) {
+            p.cancel('Cancelled');
+            return;
+        }
+
+        const headersInput = await p.text({
+            message: 'HTTP Headers (Key:Value, comma-separated)',
+            placeholder: 'Authorization:Bearer token, Content-Type:application/json',
+        }) as string;
+
+        if (p.isCancel(headersInput)) {
+            p.cancel('Cancelled');
+            return;
+        }
+
+        const headers: Record<string, string> = {};
+        if (headersInput) {
+            headersInput.split(',').forEach(pair => {
+                const colonIdx = pair.indexOf(':');
+                if (colonIdx > 0) {
+                    const key = pair.slice(0, colonIdx).trim();
+                    const value = pair.slice(colonIdx + 1).trim();
+                    if (key && value) {
+                        headers[key] = value;
+                    }
+                }
+            });
+        }
+
+        server = {
+            name,
+            displayName: displayName || undefined,
+            description: description || undefined,
+            type: 'http',
+            url,
+            headers: Object.keys(headers).length > 0 ? headers : undefined,
+        };
+    }
 
     // Load existing config
     const cwd = process.cwd();
@@ -180,18 +252,27 @@ export async function mcpAdd(options: MCPCommandOptions): Promise<void> {
         }
     }
 
-    // Add server
-    config.mcpServers[name] = {
-        command: server.command,
-        args: server.args,
-        env: server.env,
-    };
+    // Add server based on type
+    if (server.type === 'command') {
+        config.mcpServers[name] = {
+            type: 'command',
+            command: server.command,
+            args: server.args,
+            env: server.env,
+        };
+    } else {
+        config.mcpServers[name] = {
+            type: 'http',
+            url: server.url,
+            headers: server.headers,
+        };
+    }
 
     // Save config
     await mkdir(dirname(configPath), { recursive: true });
     await writeFile(configPath, JSON.stringify(config, null, 2));
 
-    p.log.success(`Added ${chalk.cyan(name)} to MCP config`);
+    p.log.success(`Added ${chalk.cyan(name)} (${serverType}) to MCP config`);
 
     // Offer to sync to IDEs
     if (!options.yes) {
@@ -244,14 +325,31 @@ export async function mcpList(options: MCPCommandOptions): Promise<void> {
             console.log();
 
             for (const [name, serverConfig] of servers) {
-                const sc = serverConfig as { command: string; args?: string[]; env?: Record<string, string> };
-                console.log(`  ${chalk.cyan(name)}`);
-                console.log(`    ${chalk.dim('Command:')} ${sc.command}`);
-                if (sc.args && sc.args.length > 0) {
-                    console.log(`    ${chalk.dim('Args:')} ${sc.args.join(' ')}`);
-                }
-                if (sc.env && Object.keys(sc.env).length > 0) {
-                    console.log(`    ${chalk.dim('Env:')} ${Object.keys(sc.env).join(', ')}`);
+                const sc = serverConfig as {
+                    type?: 'command' | 'http';
+                    command?: string;
+                    args?: string[];
+                    env?: Record<string, string>;
+                    url?: string;
+                    headers?: Record<string, string>;
+                };
+
+                const serverType = sc.type || 'command';
+                console.log(`  ${chalk.cyan(name)} ${chalk.dim(`[${serverType}]`)}`);
+
+                if (serverType === 'command') {
+                    console.log(`    ${chalk.dim('Command:')} ${sc.command}`);
+                    if (sc.args && sc.args.length > 0) {
+                        console.log(`    ${chalk.dim('Args:')} ${sc.args.join(' ')}`);
+                    }
+                    if (sc.env && Object.keys(sc.env).length > 0) {
+                        console.log(`    ${chalk.dim('Env:')} ${Object.keys(sc.env).join(', ')}`);
+                    }
+                } else {
+                    console.log(`    ${chalk.dim('URL:')} ${sc.url}`);
+                    if (sc.headers && Object.keys(sc.headers).length > 0) {
+                        console.log(`    ${chalk.dim('Headers:')} ${Object.keys(sc.headers).join(', ')}`);
+                    }
                 }
                 console.log();
             }
@@ -295,13 +393,23 @@ export async function mcpSync(options: MCPCommandOptions): Promise<void> {
         const config = JSON.parse(content);
 
         servers = Object.entries(config.mcpServers || {}).map(([name, sc]) => {
-            const serverConfig = sc as { command: string; args?: string[]; env?: Record<string, string> };
+            const serverConfig = sc as {
+                type?: 'command' | 'http';
+                command?: string;
+                args?: string[];
+                env?: Record<string, string>;
+                url?: string;
+                headers?: Record<string, string>;
+            };
             return {
                 name,
+                type: serverConfig.type || 'command',
                 command: serverConfig.command,
                 args: serverConfig.args,
                 env: serverConfig.env,
-            };
+                url: serverConfig.url,
+                headers: serverConfig.headers,
+            } as MCPServer;
         });
     } catch {
         spinner.stop(chalk.red('Failed to load MCP config'));

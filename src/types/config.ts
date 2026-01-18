@@ -57,15 +57,32 @@ export interface AgentConfig {
 }
 
 /**
+ * MCP Server type - command (stdio) or HTTP-based
+ */
+export type MCPServerType = 'command' | 'http';
+
+/**
  * MCP Server configuration
+ * Supports two modes:
+ * - command (stdio): Run a local command that implements MCP protocol
+ * - http: Connect to a remote HTTP/SSE server that implements MCP protocol
  */
 export interface MCPServer {
     name: string;
     displayName?: string;
-    command: string;
+    description?: string;
+
+    // Server type
+    type: MCPServerType;
+
+    // For command (stdio) type
+    command?: string;
     args?: string[];
     env?: Record<string, string>;
-    description?: string;
+
+    // For HTTP type
+    url?: string;
+    headers?: Record<string, string>;
 }
 
 /**

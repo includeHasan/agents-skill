@@ -10,6 +10,7 @@ import { ClaudeCodeAdapter } from './claude.js';
 import { OpenCodeAdapter } from './opencode.js';
 import { CursorAdapter } from './cursor.js';
 import { CopilotAdapter } from './copilot.js';
+import { AntigravityAdapter } from './antigravity.js';
 import type { AgentType } from '../types/index.js';
 
 // Export all adapters
@@ -18,12 +19,14 @@ export { ClaudeCodeAdapter } from './claude.js';
 export { OpenCodeAdapter } from './opencode.js';
 export { CursorAdapter } from './cursor.js';
 export { CopilotAdapter } from './copilot.js';
+export { AntigravityAdapter } from './antigravity.js';
 
 // Create singleton instances
 const claudeAdapter = new ClaudeCodeAdapter();
 const openCodeAdapter = new OpenCodeAdapter();
 const cursorAdapter = new CursorAdapter();
 const copilotAdapter = new CopilotAdapter();
+const antigravityAdapter = new AntigravityAdapter();
 
 /**
  * Registry of all available adapters
@@ -33,6 +36,7 @@ export const adapterRegistry: Map<AgentType, BaseAdapter> = new Map([
     ['opencode', openCodeAdapter],
     ['cursor', cursorAdapter],
     ['github-copilot', copilotAdapter],
+    ['antigravity', antigravityAdapter],
 ]);
 
 /**
@@ -77,6 +81,7 @@ export async function getInstalledAdapterIds(): Promise<AgentType[]> {
  */
 export const ADAPTER_PRIORITY: AgentType[] = [
     'claude-code',
+    'antigravity',
     'opencode',
     'cursor',
     'github-copilot',

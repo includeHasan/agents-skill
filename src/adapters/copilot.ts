@@ -40,6 +40,9 @@ export class CopilotAdapter extends BaseAdapter {
     }
 
     async generateAgentFile(config: AgentConfig): Promise<string> {
+        // Import prompts dynamically to avoid circular dependencies
+        const { DEFAULT_AGENT_INTRO, getPromptForTechStack } = await import('../data/prompts.js');
+
         const sections: string[] = [];
 
         // Header comment explaining this file
@@ -62,6 +65,9 @@ export class CopilotAdapter extends BaseAdapter {
             sections.push('');
         }
 
+        // Default behavior intro (the copy-paste template)
+        sections.push(DEFAULT_AGENT_INTRO);
+
         // Tech Stack
         if (config.languages.length > 0 || config.frameworks.length > 0) {
             sections.push('## Technology Stack');
@@ -76,6 +82,13 @@ export class CopilotAdapter extends BaseAdapter {
                 sections.push(`- **Other:** ${config.techStack.join(', ')}`);
             }
             sections.push('');
+        }
+
+        // Tech-specific guidelines
+        const allTech = [...config.languages, ...config.frameworks, ...config.techStack];
+        const techPrompts = getPromptForTechStack(allTech);
+        if (techPrompts) {
+            sections.push(techPrompts);
         }
 
         // Coding Standards
