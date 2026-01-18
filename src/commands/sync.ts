@@ -148,13 +148,14 @@ export async function syncCommand(options: SyncCommandOptions): Promise<void> {
 
     // Summary of what we found
     console.log();
+    const hasRules = ruleSet.global.length > 0 || ruleSet.pathSpecific.length > 0;
     p.log.step(chalk.bold('Found:'));
     p.log.message(`  Agent config: ${agentConfig ? chalk.green('Yes') : chalk.yellow('No')}`);
     p.log.message(`  MCP servers: ${mcpServers.length > 0 ? chalk.green(mcpServers.length.toString()) : chalk.yellow('0')}`);
-    p.log.message(`  Rules discovered: ${ruleSet.global.length + ruleSet.pathSpecific.length > 0 ? chalk.green('Yes') : chalk.yellow('No')}`);
+    p.log.message(`  Rules discovered: ${hasRules ? chalk.green('Yes') : chalk.yellow('No')}`);
     console.log();
 
-    if (!agentConfig && mcpServers.length === 0) {
+    if (!agentConfig && mcpServers.length === 0 && !hasRules) {
         p.log.warn('No configurations found to sync');
         p.log.info('Run `openskill-ai agent init` to create agent config');
         p.log.info('Run `openskill-ai mcp init` to create MCP config');

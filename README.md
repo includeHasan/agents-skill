@@ -6,12 +6,12 @@ A powerful CLI tool to unify your AI coding agent experience. Standardize instru
 
 ## 🚀 Key Features
 
-- 🔄 **Universal Sync** - Synchronize agent instructions and MCP configs across all IDEs at once.
+- 🔄 **Universal Sync & Migration** - Synchronize and migrate agent instructions, rules, and MCP configs across all IDEs at once.
 - 🛠️ **MCP Management** - Add, list, and sync Model Context Protocol servers (Standard Stdio & HTTP/SSE).
-- 🤖 **Standardized Agents** - Project-level `AGENTS.md` and `CLAUDE.md` with default prompt templates.
+- 🤖 **Standardized Agents** - Project-level `AGENTS.md` and `CLAUDE.md` with professional prompt templates.
 - ✨ **Skill Manager** - Install specialized agent instructions from any Git repository.
-- 📐 **Global & Workspace Rules** - Manage rules centrally (e.g., `~/.gemini/GEMINI.md`) or per project.
-- � **Auto-Detection** - Automatically detects installed AI assistants on your system.
+- 📐 **Cross-IDE Scavenging** - Automatically discover rules from `.claude/`, `.cursor/`, or `.agent/` and unify them.
+- 🌐 **Global & Workspace Rules** - Manage rules centrally (e.g., `~/.gemini/GEMINI.md`) or per project.
 
 ## 🛠️ Installation
 
@@ -25,42 +25,47 @@ npx openskill-ai <command>
 
 ## 📋 Quick Start
 
-### 1. Unified Configuration Sync
-Detected an AI IDE? Sync your setup across all of them in one go:
+### 1. Unified Configuration & Migration
+Moving from Claude Code to Antigravity? Or Cursor to Claude? Just sync. The tool will scavenge rules, instructions, and tools from all supported IDE paths and unify them across your system.
+
 ```bash
-# Sync agent files, rules, and MCP configs
+# Automatically detects .claude, .cursor, and .agent configs and applies them to all detected IDEs
 openskill-ai sync
 ```
 
 ### 2. Manage MCP Servers
-Add local or remote tools to all your AI assistants:
+Add local or remote tools (via HTTP/SSE) to all your AI assistants:
 ```bash
 # Choose between Command (stdio) or HTTP server
 openskill-ai mcp add
 
 # Sync your MCP setup to all IDE settings (settings.json, etc.)
 openskill-ai mcp sync
-
-# List all configured servers
-openskill-ai mcp list
 ```
 
 ### 3. Agent Instructions
-Initialize a standardized instruction set for your project:
+Initialize a standardized instruction set for your project with built-in best practices:
 ```bash
 # Creates AGENTS.md, CLAUDE.md, etc.
 openskill-ai agent init
 ```
 
 ### 4. Install Agent Skills
-Install specialized behaviors from the community or your own repos:
+Install specialized behaviors (like "frontend-expert" or "testing-pro") from any Git repo:
 ```bash
 # Install skills from a GitHub repository
-openskill-ai vercel-labs/agent-skills
-
-# Choose specific skills to install
-openskill-ai vercel-labs/agent-skills --skill frontend-design
+openskill-ai includeHasan/agent-skills
 ```
+
+## 🔄 Universal Migration Paths
+
+The `sync` command "scavenges" configurations from these locations and migrates them to your active IDEs:
+
+| Feature | Discovery Paths |
+|---------|-----------------|
+| **Instructions** | `AGENTS.md`, `CLAUDE.md`, `.github/copilot-instructions.md` |
+| **Rules** | `.agent/rules/`, `.claude/rules/`, `.cursor/rules/`, `.gemini/rules/`, `.cursorrules` |
+| **MCP** | `.mcp/mcp.json`, `.claude/mcp.json`, `.cursor/mcp.json` |
 
 ## 🤖 Supported Adapters
 
@@ -76,24 +81,20 @@ openskill-ai vercel-labs/agent-skills --skill frontend-design
 
 | Command | Description |
 |---------|-------------|
-| `sync` | Sync all configs across all detected IDEs |
+| `sync` | Sync & Migrate all configs across all detected IDEs |
 | `mcp add` | Add a new MCP server (Stdio or HTTP) |
 | `mcp sync` | Sync MCP servers to all assistant configs |
-| `agent init` | Initialize agent instruction files in the current folder |
+| `agent init` | Initialize standardized agent instruction files |
 | `agent show` | Show current agent configuration |
-| `<git-url>` | Install/manage skills from a remote repository |
+| `<git-url>` | Install skills from a remote repository |
 
 ## 🏗️ Folder Structure
 
 Universal AI IDEs follow these conventions through `openskill-ai`:
 
-- **Workspace Rules**: `.agent/rules/` (Markdown files)
+- **Workspace Rules**: `.agent/rules/` (Unified Markdown files)
 - **Agent Skills**: `.agent/skills/`
-- **Global Config**: `~/.gemini/` (Settings, rules, and global instructions)
-
-## 🔒 Security
-
-The tool implements strict path sanitization and traversal protection to ensure that skills downloaded from remote repositories cannot execute malicious path operations on your system.
+- **Global Config**: `~/.gemini/` (Settings, global rules, and instructions)
 
 ## 📄 License
 
